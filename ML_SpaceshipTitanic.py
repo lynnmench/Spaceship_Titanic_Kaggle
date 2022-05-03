@@ -29,6 +29,13 @@ df_test = pd.read_csv(data_file_path+'Analysis_Train_SpaceTitanic.csv')
 #Using Pearson Correlation to see feature relations to Transported
 #Also refered to as the Filter Method in Feature Selection with sklearn and Pandas
 #Comparing correlation feature values to target column
+
+df_copy = df_train.copy()
+
+#clean data frame missing collumns
+miss_col = ['']
+
+
 df_cor = df_train.corr()
 cor_target = abs(df_cor['Transported'])
 
@@ -51,13 +58,26 @@ for feat_cor in relevant_features_list:
     print(relev_high_list)
 
 #Looking at the relevant_cor data
-#Cryosleep has high correlation with locations money is spent.
+#Cryosleep has high correlation with with money being spent.
 #This makes sense becuase if the passenger choose to be put in 
-#suspended animation they can't spend money.
+#suspended animation the spend money is $0.
 #However to consider the people awake I will keep CryoSleep feature
+#Using the Person Correlation method the featrues that correlate the most
+#is cryo sleep and money spent
 #Final list of pearson features with low correlation to the other features
-pearson_features = ['CryoSleep', 'RoomService_0', 'FoodCourt_0',
-                    'ShoppingMall_0', 'Spa_0', 'VRDeck_0']
+pearson_features = ['CryoSleep', 'Spend_Sum_$0']
+#This method is hard becuase so many of the features relate to each other
+#with spending and cryo sleep.
+#This method would work better if the features were more independent of each other
+
+#Dropping features to avail
+#Drop features with high correlation to each other and not needed features
+high_cor_feat = ['']
+df_train = df_train.drop(high_cor_feat,axis=1)
+df_test = df_test.drop('Name',axis=1)
+
+#Wrapper Method
+
 
 
 
