@@ -15,6 +15,13 @@ like they would play an impact:
 
 Age_Infant, HomePlanet_Earth, HomePlanet_Europa, CryoSleep,
 Cabin_Deck_B,C,E,F, Cabin_Side_S
+
+New to data science and I'm intersted in seeing if numeric values like
+age are better in bins or left alone in column. Playing with compareing
+overfited data on models (Linear Regressoin, Logistic Regression, Random Forest
+and K-Nearest Neighbor) with a set of data that will be both cros validated
+and train/test split.
+
 """
 
 import pandas as pd
@@ -43,6 +50,7 @@ df_test = pd.read_csv(data_file_path+'Analysis_Train_SpaceTitanic.csv')
 #df_copy = df_train.copy()
 
 #Function: Logistic Regression accuracy with cross validation
+#Used to compate Feature selection methods
 def model_accuracy(model, df_train, target):
     train_X = df_train
     target_y = target
@@ -56,9 +64,10 @@ def model_accuracy(model, df_train, target):
 #Function: Test data set on multiple models
 #Linear Regression, Lasso Regression (Alpha Search),
 #Random Forest Classifier (Grid Search), K-Nearest Neighbor (Grid Search)
-def ML_Model_FullDF(train, target, set_name):
-    accuracy_list = []
-    accuracy_index = []
+def ml_model_full(train, target, set_name):
+    model_accuracy = [] 
+    model_acc_index = []
+    #model_time = []
     i=0
     model_list = []
     model_name = []
@@ -68,6 +77,12 @@ def ML_Model_FullDF(train, target, set_name):
     model_list.append(linr)
     model_name.append(set_name+' Linear Regression')
     
+    #Logistic Regression
+    logr = LogisticRegression()
+    model_list.append(logr)
+    model_name.append(set_name+' Logistic Regression')
+    
+    '''
     #Random Forest Classifier (grid search)
     rfc_hyperpar = {
         'criterion' : ['entropy', 'gini'],
@@ -78,11 +93,11 @@ def ML_Model_FullDF(train, target, set_name):
         'n_estimators' : [6,9]
     }
     rfc = RandomForestClassifier(random_state=7)
-    grid = GridSearchCV(rfc, param_grid=rfc_hyperpar, cv=10)
-    grid.fit(train, target)
+    rfc_grid = GridSearchCV(rfc, param_grid=rfc_hyperpar, cv=10)
+    rfc_grid.fit(train, target)
     #rfc_best_params = grid.best_params_
     #rfc_best_score = grid.best_score_
-    best_rfc = grid.best_estimator_
+    best_rfc = rfc_grid.best_estimator_
     model_list.append(best_rfc)
     model_name.append(set_name+' Random Forest Classifier')
     
@@ -94,84 +109,155 @@ def ML_Model_FullDF(train, target, set_name):
         "p": [1,2]
     }
     knn = KNeighborsClassifier()
-    grid = GridSearchCV(knn, param_grid=knn_hyperpar, cv=10)
-    grid.fit(x_train, target)
+    knn_grid = GridSearchCV(knn, param_grid=knn_hyperpar, cv=10)
+    knn_grid.fit(x_train, target)
     #knn_best_params = grid.best_params_
     #knn_best_score = grid.best_score_
-    best_knn = grid.best_estimator_
+    best_knn = knn_grid.best_estimator_
     model_list.append(best_knn)
     model_name.append(set_name+' K Nearest Neighbors')
+    '''
     
+    #Calculate the model accuracy
     for ml_model in model_list:
-        accuracy_list.append(model_accuracy(ml_model,train, target))
-        accuracy_index.append(model_name[i])
+        model_accuracy.append(model_accuracy(ml_model,train, target))
+        model_acc_index.append(model_name[i])
         i+=1
     
-    return accuracy_list, accuracy_index
-'''
-    #Lasso Regression with alpha search
-    #default alpha=1, best alpha=
-    lml = Lasso(alpha=0.1)
-    print(model_accuracy(lml,x_train, target))
+    return model_accuracy, model_acc_index
 
-    alpha = []
-    error = []
+def ml_model_split(train, target, set_name):
+    split_accuracy = [] 
+    split_acc_index = []
+    
+    train_X, test_X, train_y, test_y = train_test_split(
+        train, target, test_size=0.2,random_state=7)
 
-    for i in range(1,100):
-        alpha.append(i/1000)
-        lml = Lasso(alpha=(i/1000))
-        error.append(model_accuracy(lml,x_train, target))
-
-    plt.plot(alpha, error)
-    err = tuple(zip(alpha, error))
-    df_err = pd.DataFrame(err, columns = ['alpha', 'error'])
-    print(df_err[df_err.error == max(df_err.error)])
-    model_acc.append(model_accuracy(lml,x_train, target))
-    model_index.append('Init Lasso Regression')
+    #Logistic Regression
+    logr = LogisticRegression()
+    logr.fit(train_X,train_y)
+    #logr_predictions = logr.predict(test_X)
+    #logr_mean_predic = mean_absolute_error(test_y, logr_predictions)
+    split_accuracy.append(logr.score(train_X, train_y))
+    split_acc_index(set_name+' LogR Split Train')
+    split_accuracy.append(logr.score(test_X, test_y))
+    split_acc_index(set_name+' LogR Split Test')
 
     '''
+    #Random Forest Classifier (grid search)
+    rfc_hyper = {
+        'criterion' : ['entropy', 'gini'],
+        'max_depth' : [5, 10],
+        'max_features' : ['log2', 'sqrt'],
+        'min_samples_leaf' : [1,5],
+        'min_samples_split' : [3,5],
+        'n_estimators' : [6,9]
+    }
+    rfc = RandomForestClassifier(random_state=7)
+    rfc_grid = GridSearchCV(rfc, param_grid=rfc_hyper, cv=10)
+    rfc_grid.fit(x_train, target)
+    #best_params = grid.best_params_
+    #best_score = grid.best_score_
+    #print(best_params)
+    #print(best_score)
+    best_rfc = rfc_grid.best_estimator_
+    best_rfc.fit(train_X,train_y)
+    rfc_predictions = best_rfc.predict(test_X)
+    rfc_mean_predic = mean_absolute_error(test_y, rfc_predictions)
+    rfc_score_train = best_rfc.score(train_X, train_y)
+    rfc_score_test = best_rfc.score(test_X, test_y)
+    #model_acc.append(mean_absolute_error(test_y, predictions))
+    #model_index.append('Init Unseen RFC')
+
+    #K-Nearest Neighbors
+    knn_hyper = {
+        "n_neighbors": range(1,20,2),
+        "weights": ["distance", "uniform"],
+        "algorithm": ['brute'],
+        "p": [1,2]
+    }
+    knn = KNeighborsClassifier()
+    knn_grid = GridSearchCV(knn, param_grid=knn_hyper, cv=10)
+    knn_grid.fit(x_train, target)
+    #print(grid.best_params_)
+    #print(grid.best_score_)
+    best_knn = knn_grid.best_estimator_
+    best_knn.fit(train_X,train_y)
+    knn_predictions = best_knn.predict(test_X)
+    knn_mean_predic = mean_absolute_error(test_y, knn_predictions)
+    knn_score_train = best_knn.score(train_X, train_y)
+    knn_score_test = best_knn.score(test_X, test_y)
+    #model_acc.append(mean_absolute_error(test_y, predictions))
+    #model_index.append('Init Unseen KNN')
+    '''
+    
+    return split_accuracy, split_acc_index
     
 
 
 #To keep track of Logistic Regression with each feature
-model_acc = []
-model_index = []
+fs_accuracy = []
+fs_index = []
+fs_time = []
 
 
 #Looking just at the spending features
-spending_list = ['RoomService', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck',
-                 'Spend_Sum', 'Spend_Sum_0', 'RoomService_$0.1_2000', 
-                 'RoomService_$2001_30000', 'FoodCourt_Missing',
-       'FoodCourt_$0', 'FoodCourt_$0.1_2000', 'FoodCourt_$2001_30000',
-       'ShoppingMall_Missing', 'ShoppingMall_$0', 'ShoppingMall_$0.1_2000',
-       'ShoppingMall_$2001_30000', 'Spa_Missing', 'Spa_$0', 'Spa_$0.1_2000',
+#Bins, Rescale and unaltered columns
+#Comparing Correlatin and Coefficient
+#Leaving Spend_Sum off for now becuase it was created from the other columns
+#and I don't want it to play a factor now
+spend_loca = ['RoomService', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck']
+spend_bins = ['Spend_Sum_0','RoomService_Missing', 'RoomService_$0.1_2000',
+              'RoomService_$2001_30000', 'FoodCourt_Missing',
+              'FoodCourt_$0.1_2000', 'FoodCourt_$2001_30000',
+       'ShoppingMall_Missing', 'ShoppingMall_$0.1_2000',
+       'ShoppingMall_$2001_30000', 'Spa_Missing', 'Spa_$0.1_2000',
        'Spa_$2001_30000', 'Spend_Sum_Missing',
        'Spend_Sum_$0.1_1000', 'Spend_Sum_1001_3000', 'Spend_Sum_$3001_30000',
-       'VRDeck_Missing', 'VRDeck_$0', 'VRDeck_$0.1_2000', 'VRDeck_$2001_30000']
+       'VRDeck_Missing', 'VRDeck_$0.1_2000', 'VRDeck_$2001_30000']
 rescale_col = ['RoomService', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck',
                  'Spend_Sum']
-df_spend = df_train[spending_list]
-df_spend_scale = df_spend.copy()
+
+df_spend_loca = df_train[spend_loca]
+df_spend_bins = df_train[spend_bins]
+df_spend_scale = df_train[rescale_col]
 #rescale train_X values
 for col in rescale_col:
     df_spend_scale[col] = minmax_scale(df_spend_scale[col])
 
-#spend accuracy
-lr = LogisticRegression()
-model_acc.append(model_accuracy(lr,df_spend, df_train['Transported']))
-model_index.append('Spending Feat')
-
+#spend accuracy location
+logr = LogisticRegression()
+fs_accuracy.append(model_accuracy(logr,df_spend_loca, df_train['Transported']))
+fs_index.append('Feat Select Spend Location')
+#spend accuracy with bins
+fs_accuracy.append(model_accuracy(logr,df_spend_bins, df_train['Transported']))
+fs_index.append('Feat Select Spend Bins')
 #spend accuracy with rescale
-model_acc.append(model_accuracy(lr,df_spend_scale, df_train['Transported']))
-model_index.append('Spending Rescale Feat')
+fs_accuracy.append(model_accuracy(logr,df_spend_scale, df_train['Transported']))
+fs_index.append('Feat Select Spend Rescale')
 
-#checking coefficent of spending not scaled
-lr = LogisticRegression()
-lr.fit(df_spend, df_train['Transported'])
-coefficients = lr.coef_
-spend_feat_importance = abs(pd.Series(coefficients[0],
-                               index=df_spend.columns)).sort_values(ascending=False)
-high_spend_feat = spend_feat_importance[spend_feat_importance > 0.2]
+#Looking at coefficients for the normalized data
+#Rescaled values spent at each location
+logr.fit(df_spend_scale, df_train['Transported'])
+coefficients = logr.coef_
+spend_coeff_rescale = abs(pd.Series(coefficients[0],                               index=df_spend_scale.columns)).sort_values(ascending=False)
+#Rescale
+logr.fit(df_spend_bins, df_train['Transported'])
+coefficients = logr.coef_
+spend_coeff_bins = abs(pd.Series(coefficients[0],
+                               index=df_spend_bins.columns)).sort_values(ascending=False)
+
+#Chekcing correlation of spending with the bins
+#spend_feat = ['Transported']+spend_loca+spend_bins
+spend_feat = spend_bins + ['Transported'] +rescale_col
+df_spend = df_train[spend_feat]
+#rescale train_X values
+for col in rescale_col:
+    df_spend[col] = minmax_scale(df_spend[col])
+spend_cor = df_spend.corr()
+target_spend_cor = spend_cor['Transported'].abs().sort_values(ascending=False)
+target_spend_bin_cor = target_spend_cor.drop(labels=rescale_col)
+spend_bins_feat = target_spend_bin_cor[target_spend_bin_cor > 0.2]
 
 #Chekcing correlation of spending
 spending_list.append('Transported')
@@ -363,7 +449,7 @@ model_acc.append(mean_absolute_error(test_y, predictions))
 model_index.append('Init Unseen LR')
 
 #Random Forest Classifier (grid search)
-hyperparameters = {
+rfc_hyper = {
     'criterion' : ['entropy', 'gini'],
     'max_depth' : [5, 10],
     'max_features' : ['log2', 'sqrt'],
@@ -372,35 +458,41 @@ hyperparameters = {
     'n_estimators' : [6,9]
 }
 rfc = RandomForestClassifier(random_state=7)
-grid = GridSearchCV(rfc, param_grid=hyperparameters, cv=10)
-grid.fit(x_train, target)
-best_params = grid.best_params_
-best_score = grid.best_score_
-print(best_params)
-print(best_score)
-best_rfc = grid.best_estimator_
+rfc_grid = GridSearchCV(rfc, param_grid=rfc_hyper, cv=10)
+rfc_grid.fit(x_train, target)
+#best_params = grid.best_params_
+#best_score = grid.best_score_
+#print(best_params)
+#print(best_score)
+best_rfc = rfc_grid.best_estimator_
 best_rfc.fit(train_X,train_y)
-predictions = best_rfc.predict(test_X)
-model_acc.append(mean_absolute_error(test_y, predictions))
-model_index.append('Init Unseen RFC')
+rfc_predictions = best_rfc.predict(test_X)
+rfc_mean_predic = mean_absolute_error(test_y, rfc_predictions)
+rfc_score_train = best_rfc.score(train_X, train_y)
+rfc_score_test = best_rfc.score(test_X, test_y)
+#model_acc.append(mean_absolute_error(test_y, predictions))
+#model_index.append('Init Unseen RFC')
 
 #K-Nearest Neighbors
-hyperparameters = {
+knn_hyper = {
     "n_neighbors": range(1,20,2),
     "weights": ["distance", "uniform"],
     "algorithm": ['brute'],
     "p": [1,2]
 }
 knn = KNeighborsClassifier()
-grid = GridSearchCV(knn, param_grid=hyperparameters, cv=10)
-grid.fit(x_train, target)
-print(grid.best_params_)
-print(grid.best_score_)
-best_knn = grid.best_estimator_
+knn_grid = GridSearchCV(knn, param_grid=knn_hyper, cv=10)
+knn_grid.fit(x_train, target)
+#print(grid.best_params_)
+#print(grid.best_score_)
+best_knn = knn_grid.best_estimator_
 best_knn.fit(train_X,train_y)
-predictions = best_knn.predict(test_X)
-model_acc.append(mean_absolute_error(test_y, predictions))
-model_index.append('Init Unseen KNN')
+knn_predictions = best_knn.predict(test_X)
+knn_mean_predic = mean_absolute_error(test_y, knn_predictions)
+knn_score_train = best_knn.score(train_X, train_y)
+knn_score_test = best_knn.score(test_X, test_y)
+#model_acc.append(mean_absolute_error(test_y, predictions))
+#model_index.append('Init Unseen KNN')
 
 
 #Wrapper Method -> Recursive Feature Elemination (RFE) with Cross-Validation (CV)
