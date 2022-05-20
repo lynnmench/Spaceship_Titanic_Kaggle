@@ -28,6 +28,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import time
 
 from sklearn.preprocessing import minmax_scale
 from sklearn.model_selection import cross_val_score
@@ -44,8 +45,8 @@ import statsmodels.api as sm
 
 #Reading in data files created from Data_Clean_Analyze_SpaceshipTitanic
 data_file_path = '/Users/lynnpowell/Documents/DS_Projects/Spaceship_Titanic/'
-df_train = pd.read_csv(data_file_path+'Analysis_Train_SpaceTitanic.csv')
-df_test = pd.read_csv(data_file_path+'Analysis_Train_SpaceTitanic.csv')
+df_train = pd.read_csv(data_file_path+'Initial_Analysis_Train_SpaceTitanic.csv')
+df_test = pd.read_csv(data_file_path+'Initial_Analysis_Test_SpaceTitanic.csv')
 
 #df_copy = df_train.copy()
 
@@ -64,10 +65,10 @@ def model_accuracy(model, df_train, target):
 #Function: Test data set on multiple models
 #Linear Regression, Lasso Regression (Alpha Search),
 #Random Forest Classifier (Grid Search), K-Nearest Neighbor (Grid Search)
-def ml_model_full(train, target, set_name):
-    model_accuracy = [] 
+def ml_model_full(df_train, target, set_name):
+    model_acc_list = [] 
     model_acc_index = []
-    #model_time = []
+    model_time = []
     i=0
     model_list = []
     model_name = []
@@ -82,7 +83,6 @@ def ml_model_full(train, target, set_name):
     model_list.append(logr)
     model_name.append(set_name+' Logistic Regression')
     
-    '''
     #Random Forest Classifier (grid search)
     rfc_hyperpar = {
         'criterion' : ['entropy', 'gini'],
@@ -94,7 +94,7 @@ def ml_model_full(train, target, set_name):
     }
     rfc = RandomForestClassifier(random_state=7)
     rfc_grid = GridSearchCV(rfc, param_grid=rfc_hyperpar, cv=10)
-    rfc_grid.fit(train, target)
+    rfc_grid.fit(df_train, target)
     #rfc_best_params = grid.best_params_
     #rfc_best_score = grid.best_score_
     best_rfc = rfc_grid.best_estimator_
@@ -110,25 +110,28 @@ def ml_model_full(train, target, set_name):
     }
     knn = KNeighborsClassifier()
     knn_grid = GridSearchCV(knn, param_grid=knn_hyperpar, cv=10)
-    knn_grid.fit(x_train, target)
+    knn_grid.fit(df_train, target)
     #knn_best_params = grid.best_params_
     #knn_best_score = grid.best_score_
     best_knn = knn_grid.best_estimator_
     model_list.append(best_knn)
     model_name.append(set_name+' K Nearest Neighbors')
-    '''
+
     
     #Calculate the model accuracy
     for ml_model in model_list:
-        model_accuracy.append(model_accuracy(ml_model,train, target))
+        start_time = time.time()
+        model_acc_list.append(model_accuracy(ml_model,df_train, target))
         model_acc_index.append(model_name[i])
+        model_time.append(time.time() - start_time)
         i+=1
     
-    return model_accuracy, model_acc_index
+    return model_acc_list, model_acc_index, model_time
 
 def ml_model_split(train, target, set_name):
     split_accuracy = [] 
     split_acc_index = []
+    model_time = []
     
     train_X, test_X, train_y, test_y = train_test_split(
         train, target, test_size=0.2,random_state=7)
@@ -143,7 +146,7 @@ def ml_model_split(train, target, set_name):
     split_accuracy.append(logr.score(test_X, test_y))
     split_acc_index(set_name+' LogR Split Test')
 
-    '''
+
     #Random Forest Classifier (grid search)
     rfc_hyper = {
         'criterion' : ['entropy', 'gini'],
@@ -189,13 +192,13 @@ def ml_model_split(train, target, set_name):
     knn_score_test = best_knn.score(test_X, test_y)
     #model_acc.append(mean_absolute_error(test_y, predictions))
     #model_index.append('Init Unseen KNN')
-    '''
+
     
     return split_accuracy, split_acc_index
     
 
 
-#To keep track of Logistic Regression with each feature
+#To keep track of the prediction accuracy with each feature and ML model
 fs_accuracy = []
 fs_index = []
 fs_time = []
@@ -206,19 +209,21 @@ fs_time = []
 #Comparing Correlatin and Coefficient
 #Leaving Spend_Sum off for now becuase it was created from the other columns
 #and I don't want it to play a factor now
-spend_loca = ['RoomService', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck']
-spend_bins = ['Spend_Sum_0','RoomService_Missing', 'RoomService_$0.1_2000',
-              'RoomService_$2001_30000', 'FoodCourt_Missing',
-              'FoodCourt_$0.1_2000', 'FoodCourt_$2001_30000',
-       'ShoppingMall_Missing', 'ShoppingMall_$0.1_2000',
-       'ShoppingMall_$2001_30000', 'Spa_Missing', 'Spa_$0.1_2000',
-       'Spa_$2001_30000', 'Spend_Sum_Missing',
-       'Spend_Sum_$0.1_1000', 'Spend_Sum_1001_3000', 'Spend_Sum_$3001_30000',
-       'VRDeck_Missing', 'VRDeck_$0.1_2000', 'VRDeck_$2001_30000']
+spend_original = ['RoomService', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck', 
+              'Spend_Sum']
+spend_bins = ['RoomService_Missing', 'RoomService_$0',
+       'RoomService_$0.1_2000', 'RoomService_$2001_30000', 'FoodCourt_Missing',
+       'FoodCourt_$0', 'FoodCourt_$0.1_2000', 'FoodCourt_$2001_30000',
+       'ShoppingMall_Missing', 'ShoppingMall_$0', 'ShoppingMall_$0.1_2000',
+       'ShoppingMall_$2001_30000', 'Spa_Missing', 'Spa_$0', 'Spa_$0.1_2000',
+       'Spa_$2001_30000', 'Spend_Sum_Missing', 'Spend_Sum_$0',
+       'Spend_Sum_$0.1_500', 'Spend_Sum_$501_1000', 'Spend_Sum_$1001_1500',
+       'Spend_Sum_$1501_2500', 'Spend_Sum_$2501_4000', 'Spend_Sum_$4001_36000',
+       'VRDeck_Missing', 'VRDeck_$0', 'VRDeck_$0.1_2000', 'VRDeck_$2001_30000',]
 rescale_col = ['RoomService', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck',
                  'Spend_Sum']
 
-df_spend_loca = df_train[spend_loca]
+df_spend_original = df_train[spend_original]
 df_spend_bins = df_train[spend_bins]
 df_spend_scale = df_train[rescale_col]
 #rescale train_X values
@@ -227,79 +232,90 @@ for col in rescale_col:
 
 #spend accuracy location
 logr = LogisticRegression()
-fs_accuracy.append(model_accuracy(logr,df_spend_loca, df_train['Transported']))
-fs_index.append('Feat Select Spend Location')
+start_time = time.time()
+fs_accuracy.append(model_accuracy(logr,df_spend_original, df_train['Transported']))
+fs_index.append('Feat Select Spend Orignial')
+fs_time.append(time.time() - start_time)
 #spend accuracy with bins
+start_time = time.time()
 fs_accuracy.append(model_accuracy(logr,df_spend_bins, df_train['Transported']))
 fs_index.append('Feat Select Spend Bins')
+fs_time.append(time.time() - start_time)
 #spend accuracy with rescale
+start_time = time.time()
 fs_accuracy.append(model_accuracy(logr,df_spend_scale, df_train['Transported']))
 fs_index.append('Feat Select Spend Rescale')
+fs_time.append(time.time() - start_time)
 
 #Looking at coefficients for the normalized data
 #Rescaled values spent at each location
 logr.fit(df_spend_scale, df_train['Transported'])
 coefficients = logr.coef_
-spend_coeff_rescale = abs(pd.Series(coefficients[0],                               index=df_spend_scale.columns)).sort_values(ascending=False)
-#Rescale
+spend_coeff_rescale = abs(pd.Series(coefficients[0], 
+                                    index=df_spend_scale.columns)).sort_values(ascending=False)
+
+#Coefficient of Spend Bins
 logr.fit(df_spend_bins, df_train['Transported'])
 coefficients = logr.coef_
 spend_coeff_bins = abs(pd.Series(coefficients[0],
                                index=df_spend_bins.columns)).sort_values(ascending=False)
+spend_coeff_bins = spend_coeff_bins[spend_coeff_bins > 0.9].index.values.tolist()
 
-#Chekcing correlation of spending with the bins
+#Chekcing correlation of spending
 #spend_feat = ['Transported']+spend_loca+spend_bins
-spend_feat = spend_bins + ['Transported'] +rescale_col
+spend_feat = spend_bins + ['Transported'] + rescale_col
 df_spend = df_train[spend_feat]
 #rescale train_X values
 for col in rescale_col:
     df_spend[col] = minmax_scale(df_spend[col])
 spend_cor = df_spend.corr()
 target_spend_cor = spend_cor['Transported'].abs().sort_values(ascending=False)
-target_spend_bin_cor = target_spend_cor.drop(labels=rescale_col)
-spend_bins_feat = target_spend_bin_cor[target_spend_bin_cor > 0.2]
+target_spend_bin_cor = target_spend_cor.drop(labels=(rescale_col+['Transported']))
+spend_bins_feat = target_spend_bin_cor[target_spend_bin_cor > 0.27].index.values.tolist()
 
-#Chekcing correlation of spending
-spending_list.append('Transported')
-#Does the correlation of families look like the Logistic Regression coefficent
-df_spend_cor = df_train[spending_list].corr()
-cor_spend_target = df_spend_cor['Transported'].abs().sort_values(ascending=False)
-#RoomService_0, ShoppingMall_0, VRDeck_0 are to close to Spend_Sum_0
-#Leaving Spend_sum_0 in because dropping cryo sleep later
-#Best features based on correlation and coefficent of spending
-spend_feat = ['Spend_Sum_0','RoomService','Spa','VRDeck','ShoppingMall', 'FoodCourt']
-
+#Spending feature list for ML models
+spend_feat_rescale = spend_coeff_rescale[spend_coeff_rescale > 8].index.values.tolist()
+spend_feat = np.unique(spend_coeff_bins + spend_bins_feat).tolist()
 
 #Looking at age and families
 family_list = ['ID_Group','Age','Age_Missing', 'Age_Infant', 'Age_Child','Age_Teenager',
                'Age_Young Adult', 'Age_Adult', 'Age_Senior', 'family_sum',
                'family_kid_num','family_small_kids', 'family_teen',
-               'kids_without_adults']
+               'kids_without_adults', 'Cryo_Fam']
 
 df_family = df_train[family_list]
-model_acc.append(model_accuracy(lr,df_family, df_train['Transported']))
-model_index.append('Family Feat')
+start_time = time.time()
+fs_accuracy.append(model_accuracy(logr,df_family, df_train['Transported']))
+fs_index.append('Family Feat')
+fs_time.append(time.time() - start_time)
 
 #checking coefficent of families and ages
-lr = LogisticRegression()
-lr.fit(df_family, df_train['Transported'])
-coefficients = lr.coef_
-family_feat_importance = pd.Series(coefficients[0],
+logr.fit(df_family, df_train['Transported'])
+coefficients = logr.coef_
+family_coeff = pd.Series(coefficients[0],
                                index=df_family.columns).abs().sort_values(ascending=False)
-high_family_feat = family_feat_importance[family_feat_importance > 0.2]
+family_coeff_feat = family_coeff[family_coeff > 0.35].index.values.tolist()
 #family_feat = high_family_feat.index.values.tolist()
 #Spend_Sum_0, RoomService_0, ShoppingMall_0, VRDeck_0
 family_list.append('Transported')
 #Does the correlation of families look like the Logistic Regression coefficent
 df_family_cor = df_train[family_list].corr()
 cor_family_target = df_family_cor['Transported'].abs().sort_values(ascending=False)
+cor_family_target = cor_family_target.drop(labels=(['Age','Transported']))
+family_cor_feat = cor_family_target[cor_family_target > 0.06].index.values.tolist()
+
+#Cryo_Fam has high correlation becuase CryoSleep has high correlation
 #Features that share high values in both correlation and lr coefficient
-family_feat = ['Age_Infant', 'Age_Child', 'family_sum']
+family_feat_rescale = ['Age','family_sum']
+family_feat = np.unique(family_coeff_feat + family_cor_feat).tolist()
+family_drop = ['Cryo_Fam','Age_Young Adult']
+for x in family_drop:
+    family_feat.remove(x)
 
 
 #Analyzing remaining features: Destination, Cabin, Home planet and VIP
 #Not analyzing Cryo Sleep becuase it is to close to Spend Sum $0
-status_list = ['VIP', 'HomePlanet_Earth',
+status_list = ['CryoSleep', 'VIP', 'HomePlanet_Earth',
        'HomePlanet_Europa', 'HomePlanet_Mars', 'HomePlanet_Missing',
        'Destination_55 Cancri e', 'Destination_Missing',
        'Destination_PSO J318.5-22', 'Destination_TRAPPIST-1e',
@@ -308,8 +324,10 @@ status_list = ['VIP', 'HomePlanet_Earth',
        'Cabin_Deck_T', 'Cabin_Side_Missing', 'Cabin_Side_P', 'Cabin_Side_S']
 
 df_status = df_train[status_list]
-model_acc.append(model_accuracy(lr,df_status, df_train['Transported']))
-model_index.append('Status Feat')
+start_time = time.time()
+fs_accuracy.append(model_accuracy(logr,df_status, df_train['Transported']))
+fs_index.append('Status Feat')
+fs_time.append(time.time() - start_time)
 
 #checking coefficent of status features
 lr = LogisticRegression()
@@ -317,16 +335,64 @@ lr.fit(df_status, df_train['Transported'])
 coefficients = lr.coef_
 status_feat_importance = pd.Series(coefficients[0],
                                index=df_status.columns).abs().sort_values(ascending=False)
-high_status_feat = status_feat_importance[status_feat_importance > 0.2]
+high_status_feat = status_feat_importance[status_feat_importance > 0.28].index.values.tolist()
 
 #Checking correlation of status features
 status_list.append('Transported')
 df_status_cor = df_train[status_list].corr()
 cor_status_target = df_status_cor['Transported'].abs().sort_values(ascending=False)
+cor_status_target = cor_status_target.drop(labels=('Transported'))
+status_cor_feat = cor_status_target[cor_status_target > 0.09].index.values.tolist()
 
-status_features = ['HomePlanet_Earth', 'HomePlanet_Europa', 'Destination_55 Cancri e',
-                   'Destination_TRAPPIST-1e','Cabin_Deck_B',
-                   'Cabin_Deck_C','Cabin_Deck_E','Cabin_Deck_F', 'Cabin_Side_S']
+#Features that share high values in both correlation and lr coefficient
+status_feat = np.unique(high_status_feat + status_cor_feat).tolist()
+
+#Rescale features and status features
+#compareing correlation to make sure none of them are to close to each other
+rescale_feat = spend_feat_rescale + family_feat_rescale
+rescale_all = rescale_feat + status_feat
+df_rescale = df_train[rescale_all]
+for col in rescale_feat:
+    df_rescale[col] = minmax_scale(df_rescale[col])
+
+df_rescale_cor = df_rescale.corr().abs()
+#Cabin Side P and Cabin Side S have high correlation
+rescale_drop = ['Cabin_Side_P','Destination_TRAPPIST-1e',
+                'HomePlanet_Earth','Cabin_Deck_T']
+df_rescale = df_rescale.drop(rescale_drop,axis=1)
+
+#compareing correlation to make sure none of them are to close to each other
+feat_cor_coeff = spend_feat + family_feat + status_feat
+df_cor_coeff = df_train[feat_cor_coeff]
+full_feat_corr = df_cor_coeff.corr().abs()
+cryo_corr = full_feat_corr['CryoSleep'].abs().sort_values(ascending=False)
+cryo_corr = cryo_corr.drop(labels=('CryoSleep'))
+high_cryo_corr = cryo_corr[cryo_corr > 0.53].index.values.tolist()
+
+
+high_match_corr = high_cryo_corr+['Cabin_Side_P','Destination_TRAPPIST-1e',
+                                  'HomePlanet_Earth','Cabin_Deck_T']
+df_cor_coeff = df_cor_coeff.drop(high_match_corr, axis=1)
+
+
+#Final Data Frames to run ML models on
+#df_rescale
+#df_cor_coeff
+acc_full_rescale = ml_model_full(df_rescale,df_train['Transported'],'Rescale')
+fs_accuracy = fs_accuracy + acc_full_rescale[0]
+fs_index = fs_index + acc_full_rescale[1]
+fs_time = fs_time + acc_full_rescale[2]
+
+acc_corr_coeff = ml_model_full(df_cor_coeff,df_train['Transported'],'Corr Coeff')
+fs_accuracy = fs_accuracy + acc_corr_coeff[0]
+fs_index = fs_index + acc_corr_coeff[1]
+fs_time = fs_time + acc_corr_coeff[2]
+
+
+#Using Split to evaluate on parts of the data frame the model has not seen
+ml_model_split(train, target, set_name)
+
+
 
 #Initial list after anazlying the spending, families and status of passengers
 #Using Pearson Correlation to see feature relations to Transported
