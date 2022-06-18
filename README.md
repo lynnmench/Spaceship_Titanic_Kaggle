@@ -97,6 +97,5 @@ Given more time I would analyze some of my assumptions made in the data cleaning
 
 
 ## Featured Notebooks/Analysis/Deliverables
-* [Notebook/Markdown/Slide Deck Title](link)
-* [Notebook/Markdown/Slide DeckTitle](link)
-* [Blog Post](link)
+* [Data Cleaning and Analysis](https://github.com/lynnmench/Spaceship_Titanic_Kaggle/blob/291638a53e0128d5282fccb50447f6f22a28123c/Data_Clean_Analyze_SpaceshipTitanic.ipynb)
+* [Machine Learning Feature Selection and Models](https://github.com/lynnmench/Spaceship_Titanic_Kaggle/blob/291638a53e0128d5282fccb50447f6f22a28123c/ML_SpaceshipTitanic.py)
