@@ -9,18 +9,17 @@ Kaggle Competition -> Spaceship Titanic
 Data Quest -> Data Science Lectures
 """
 """
-From the data cleaning and initial analysis file the features that look
-like they would play an impact:
+From the data cleaning and initial analysis file initial theory of
+the features that have a high impact on transporation results:
 
 Age_Infant, HomePlanet_Earth, HomePlanet_Europa, CryoSleep,
 Cabin_Deck_B,C,E,F, Cabin_Side_S
 
-New to data science and I'm intersted in seeing if numeric values like
-age are better in bins or left alone in column. Playing with compareing
-overfited data on models (Linear Regressoin, Logistic Regression, Random Forest
-and K-Nearest Neighbor) with a set of data that will be both cross validated
-and train/test split.
-
+New to data science and I'm intersted if select dummy variables cause less 
+overrfitting or if it is better to rescale integer columns. Playing with 
+compareing overfited data on models (Linear Regressoin, Logistic Regression,
+Random Forest and K-Nearest Neighbor) with a set of 
+data that will be both cross validated and train/test split.
 """
 
 import pandas as pd
@@ -86,7 +85,7 @@ def ml_model_full(df_train, target, set_name):
     model_time.append(time.time() - start_time)
 
     #Random Forest Classifier (grid search)
-    #Hyperparameters found in Data Quest
+    #Hyperparameters found in Data Quest Machine Learning Models Lecture
     rfc_hyperpar = {
         'criterion' : ['entropy', 'gini'],
         'max_depth' : [5, 10],
@@ -107,7 +106,7 @@ def ml_model_full(df_train, target, set_name):
     model_time.append(time.time() - start_time)
     
     #K-Nearest Neighbors
-    #Hyperparameters found in Data Quest
+    #Hyperparameters found in Data Quest Machine Learning Models Lecture
     knn_hyperpar = {
         "n_neighbors": range(1,20,2),
         "weights": ["distance", "uniform"],
@@ -166,7 +165,7 @@ def ml_model_split(train, target, set_name):
 
 
     #Random Forest Classifier (grid search)
-    #Hyperparameters found in Data Quest
+    #Hyperparameters found in Data Quest Machine Learning Models Lecture
     rfc_hyper = {
         'criterion' : ['entropy', 'gini'],
         'max_depth' : [5, 10],
@@ -197,7 +196,7 @@ def ml_model_split(train, target, set_name):
     model_time.append(time.time() - start_time)
 
     #K-Nearest Neighbors
-    #Hyperparameters found in Data Quest
+    #Hyperparameters found in Data Quest Machine Learning Models Lecture
     knn_hyper = {
         "n_neighbors": range(1,20,2),
         "weights": ["distance", "uniform"],
@@ -445,6 +444,7 @@ df_ml_test = df_test[test_feat]
 
 
 #Running Test Data Frame using ML model Random Forest Classifier
+#Hyperparameters found in Data Quest Machine Learning Models Lecture
 rfc_hyper = {
     'criterion' : ['entropy', 'gini'],
     'max_depth' : [5, 10],

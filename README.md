@@ -20,20 +20,26 @@ Github, RocioSNg, [Project-README-template.md](https://github.com/sfbrigade/data
 * Jupyter
 * Spyder
 * Pandas
-* numpy
-* matplotlib
-* sklearn
+* Numpy
+* Matplotlib
+* Sklearn
+
+### Methods and Models
+* Pearson Correlation
+* Coefficient
+* Linear Regression
+* Logistic Regression
+* Random Forest
+* K-Nearest Neighbors
 
 ### Project Outline
 * Inferential Statistics
-* data exploration/descriptive statistics
-* data processing/cleaning
+* Data Exploration/Descriptive Statistics
+* Data Processing/Cleaning
 * Data Visualization
 * Feature Selection
 * Machine Learning/Predictive Modeling
-* writeup/reporting
-
-(Provide more detailed overview of the project.  Talk a bit about your data sources and what questions and hypothesis you are exploring. What specific data analysis/visualization and modelling work are you using to solve the problem? What blockers and challenges are you facing?  Feel free to number or bullet point things here)
+* Writeup/Reporting
 
 ## Project Description
 
