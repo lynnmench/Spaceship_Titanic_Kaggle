@@ -112,7 +112,7 @@ mutual_info_df = mutual_info.sort_values(ascending=False).to_frame().reset_index
 mutual_info_df.columns=['Features','Mutual Info']
 
 
-
+'''
 # Comparing feature selection methods to see what columns come up the most often
 
 feat_select = pd.concat([univar_df, feat_impot_df, corr_feat_full_df, mutual_info_df], axis=1, ignore_index=True)
@@ -127,7 +127,7 @@ top_feat_unique = []
 for feat in top_features:
     if feat not in top_feat_unique:
         top_feat_unique.append(feat)
-
+'''
 
 
 
@@ -221,7 +221,7 @@ def ml_model_split(train, target, set_name):
     model_time = []
     
     train_X, test_X, train_y, test_y = train_test_split(
-        train, target, test_size=0.2,random_state=7)
+        train, target, test_size=0.3,random_state=7)
     
     #Linear Regression
     linr = LinearRegression()
@@ -313,7 +313,74 @@ def ml_model_split(train, target, set_name):
 # ------- Machine Learning Evaluations --------------
 
 
+# Comparing feature selection methods to see what columns come up the most often
+
+feat_select = pd.concat([univar_df, feat_impot_df, corr_feat_full_df, mutual_info_df], axis=1, ignore_index=True)
+feat1 = feat_select.iloc[:8,0].tolist()
+feat2 = feat_select.iloc[:6,2].tolist()
+#feat3 = feat_select.iloc[:5,4].dropna().tolist()
+feat3 = feat_select.iloc[:7,4].tolist()
+feat4 = feat_select.iloc[:8,5].tolist()
+#top_features = feat1+feat2+feat3+feat4
+top_features = feat1+feat3+feat4
+
+top_feat_unique = []
+for feat in top_features:
+    if feat not in top_feat_unique:
+        top_feat_unique.append(feat)
+
+my_guess_feat = ['CryoSleep','Age','Total_Spent','Cabin_Num','Ship_Deck','Ship_Side_S','HomePlanet_Earth']
+
+#To keep track of the prediction accuracy with each feature and ML model
+fs_accuracy = []
+fs_index = []
+fs_time = []
+
+#Running models on top features selected using feature selection methods above
+feat_1 = ml_model_split(df_train[my_guess_feat],df_train['Transported'],'Feat_Select_my')
+fs_accuracy = fs_accuracy + feat_1[0]
+fs_index = fs_index + feat_1[1]
+fs_time = fs_time + feat_1[2]
+
+#Running models on top features selected using feature selection methods above
+feat_1 = ml_model_split(df_train[feat1],df_train['Transported'],'Feat_Select_1')
+fs_accuracy = fs_accuracy + feat_1[0]
+fs_index = fs_index + feat_1[1]
+fs_time = fs_time + feat_1[2]
+
+#Running models on top features selected using feature selection methods above
+feat_2 = ml_model_split(df_train[feat2],df_train['Transported'],'Feat_Select_2')
+fs_accuracy = fs_accuracy + feat_2[0]
+fs_index = fs_index + feat_2[1]
+fs_time = fs_time + feat_2[2]
+
+#Running models on top features selected using feature selection methods above
+feat_3 = ml_model_split(df_train[feat3],df_train['Transported'],'Feat_Select_3')
+fs_accuracy = fs_accuracy + feat_3[0]
+fs_index = fs_index + feat_3[1]
+fs_time = fs_time + feat_3[2]
+
+#Running models on top features selected using feature selection methods above
+feat_4 = ml_model_split(df_train[feat4],df_train['Transported'],'Feat_Select_4')
+fs_accuracy = fs_accuracy + feat_4[0]
+fs_index = fs_index + feat_4[1]
+fs_time = fs_time + feat_4[2]
 
 
+#Running models on top features selected using feature selection methods above
+full_lst = ml_model_split(df_train[top_feat_unique],df_train['Transported'],'Feat_Select_full')
+fs_accuracy = fs_accuracy + full_lst[0]
+fs_index = fs_index + full_lst[1]
+fs_time = fs_time + full_lst[2]
+
+
+#Create data frame with all results
+df_results = pd.DataFrame({'Accuracy Score':fs_accuracy,
+                           'ML Model':fs_index,
+                           'Time_Sec':fs_time}).sort_values(by=['Accuracy Score'], ascending=False)
+
+df_results = df_results.sort_values(by=['Accuracy Score'], ascending=False)
+
+#df_results.to_csv(data_file_path+'Results_2_From_2nd_Attempt.csv',index=False)
 
 
